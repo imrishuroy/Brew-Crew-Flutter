@@ -1,5 +1,6 @@
 import 'package:brew_crew/models/app_user.dart';
 import 'package:brew_crew/screens/auth/authenticate.dart';
+import 'package:brew_crew/screens/auth/verify_email.dart';
 
 import 'package:brew_crew/screens/home/home.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ class AuthWrapper extends StatelessWidget {
 
     if (user == null) {
       return Authenticate();
+      // } else if (!user.isEmailVerified) {
+      //   return VerifyEmail();
     } else {
       return Home();
     }
