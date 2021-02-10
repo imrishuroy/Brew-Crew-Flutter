@@ -1,0 +1,124 @@
+import 'package:brew_crew/models/app_user.dart';
+import 'package:brew_crew/shared/database.dart';
+import 'package:brew_crew/shared/loading_spinner.dart';
+
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class SettingForm extends StatefulWidget {
+  @override
+  _SettingFormState createState() => _SettingFormState();
+}
+
+class _SettingFormState extends State<SettingForm> {
+  final _formKey = GlobalKey<FormState>();
+  final List<String> sugars = ['0', '1', '2', '3, 4'];
+
+  String _currentName;
+  String _currentSugar;
+  int _currentStrength;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<AppUser>(context);
+    return StreamBuilder<UserData>(
+      stream: DatabaseService(uid: user.uid).userData,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          UserData userData = snapshot.data;
+          return Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Text(
+                  'Update your brew settings',
+                  style: TextStyle(
+                    fontSize: 18.0,
+                  ),
+                ),
+                SizedBox(height: 20.0),
+                TextFormField(
+                  initialValue: userData.name,
+                  decoration: InputDecoration(
+                    fillColor: Colors.white,
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.white,
+                        width: 2.5,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.brown[200],
+                        width: 2.5,
+                      ),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _currentName = value;
+                    });
+                  },
+                  validator: (value) =>
+                      value.isEmpty ? 'Please enter a name' : null,
+                ),
+                SizedBox(height: 20.0),
+                DropdownButtonFormField(
+                    value: _currentSugar ?? userData.sugars,
+                    items: sugars.map(
+                      (sugar) {
+                        return DropdownMenuItem(
+                          value: sugar,
+                          child: Text('$sugar sugars'),
+                        );
+                      },
+                    ).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _currentSugar = value;
+                      });
+                    }),
+                SizedBox(height: 50.0),
+                Slider(
+                  value: (_currentStrength ?? userData.strength).toDouble(),
+                  activeColor:
+                      Colors.brown[_currentStrength ?? userData.strength],
+                  inactiveColor:
+                      Colors.brown[_currentStrength ?? userData.strength],
+                  min: 100.0,
+                  max: 900.0,
+                  divisions: 8,
+                  onChanged: (val) =>
+                      setState(() => _currentStrength = val.round()),
+                ),
+                SizedBox(height: 20.0),
+                RaisedButton(
+                  color: Colors.brown[400],
+                  onPressed: () async {
+                    if (_formKey.currentState.validate()) {
+                      await DatabaseService(uid: user.uid).updateUserData(
+                        _currentSugar ?? userData.sugars,
+                        _currentName ?? userData.name,
+                        _currentStrength ?? userData.strength,
+                      );
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: Text(
+                    'Update',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              ],
+            ),
+          );
+        } else {
+          return LoadingSpinner();
+        }
+      },
+    );
+  }
+}
